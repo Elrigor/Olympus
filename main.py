@@ -21,6 +21,15 @@ file_names = [match.split('/')[-1] for match in matches]
 
 total_downloaded_bytes = 0
 
+reset = "\033[0m"
+index_color = "\033[94m"
+file_color = "\033[92m"
+stats_color = "\033[96m"
+error_color = "\033[91m"  
+downloaded_size_color = "\033[93m"
+total_size_color = "\033[95m"
+percentage_color = "\033[96m"
+
 def download_file(file_name, index, total):
     global total_downloaded_bytes
     url = f"{base_url}{file_name}"
@@ -37,17 +46,19 @@ def download_file(file_name, index, total):
                 downloaded_mb = downloaded_size / (1024 * 1024)
                 total_size_mb = total_size_in_bytes / (1024 * 1024)
                 percentage = (downloaded_size / total_size_in_bytes) * 100
-                sys.stdout.write(f"\rFile: {index + 1}/{total} - 'Downloaded': {file_name} [{downloaded_mb:.2f}/{total_size_mb:.2f} MB ({percentage:.2f}%)]")
+                message = f"\r{index_color}File: {index + 1}/{total}{reset} - {file_color} {file_name}{reset} "
+                message += f"{downloaded_size_color}[{downloaded_mb:.2f} MB{reset}/{total_size_color}{total_size_mb:.2f} MB{reset} "
+                message += f"({percentage_color}{percentage:.2f}%{reset})]"
+                sys.stdout.write(f"{message: <150}")
                 sys.stdout.flush()
     else:
-        sys.stdout.write(f"\rFile: {index + 1}/{total} - 'Error': {file_name}")
+        message = f"\r{error_color}File: {index + 1}/{total} - 'Error': {file_name}{reset}"
+        sys.stdout.write(f"{message: <150}")
         sys.stdout.flush()
 
 total_files = len(file_names)
 for index, file_name in enumerate(file_names):
     download_file(file_name, index, total_files)
-    if index < total_files - 1:
-        sys.stdout.write('\n')
 
 total_downloaded_gb = total_downloaded_bytes / (1024 * 1024 * 1024)
-print(f"\nCompleted: Downloaded {len(file_names)} files with a total of {total_downloaded_gb:.2f} GB.")
+print(f"\r\033[92mCompleted: Downloaded {len(file_names)} files with a total of {total_downloaded_gb:.2f} GB.\033[0m")
