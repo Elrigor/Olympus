@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import os
 import re
+import json  # Importar json para leer el archivo de configuración
 from datetime import datetime
 import argparse
 from colorama import Fore, Style, init
@@ -9,14 +10,23 @@ import sys
 
 init(autoreset=True)
 
-parser = argparse.ArgumentParser(description="Download only not previously downloaded file.")
-parser.add_argument('--new', action='store_true', help="Download new files only.")
-args = parser.parse_args()
+# Leer el archivo de configuración
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+# Asignar valores desde el archivo de configuración
+destination_folder = config.get('game_path', './wads')
+game_version = config.get('game_version', 'EU')
+download_new_only = config.get('download_new_only', True)
+
+# Configurar la base_url según la versión del juego
+if game_version == 'EU':
+    base_url = 'http://versionec-es.eu.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/'
+elif game_version == 'NA':
+    base_url = 'http://versionec-na.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/'
 
 bin_file_path = './LatestFileList.bin'
-destination_folder = './wads'
 downloaded_files_log = './downloaded_files.txt'
-base_url = 'http://versionec-es.eu.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/'
 
 if not os.path.exists(destination_folder):
     os.makedirs(destination_folder)
@@ -36,18 +46,13 @@ matches = pattern.findall(content_str)
 
 file_names = [match.split('/')[-1] for match in matches]
 
-if args.new:
+if download_new_only:
     file_names = [file_name for file_name in file_names if file_name not in downloaded_files]
 
 download_progress = {}
 start_time = datetime.now()
-download_progress = {}
-start_time = datetime.now()
 async def download_file(session, file_name, index, total):
     destination_path = os.path.join(destination_folder, file_name)
-    if args.new and file_name in downloaded_files:
-        download_progress[file_name] = (1, 1)
-        return
 
     url = f"{base_url}{file_name}"
     async with session.get(url) as response:
