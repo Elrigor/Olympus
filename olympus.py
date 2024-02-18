@@ -2,24 +2,20 @@ import aiohttp
 import asyncio
 import os
 import re
-import json  # Importar json para leer el archivo de configuración
+import json
 from datetime import datetime
-import argparse
 from colorama import Fore, Style, init
 import sys
 
 init(autoreset=True)
 
-# Leer el archivo de configuración
 with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
-# Asignar valores desde el archivo de configuración
 destination_folder = config.get('game_path', './wads')
 game_version = config.get('game_version', 'EU')
 download_new_only = config.get('download_new_only', True)
 
-# Configurar la base_url según la versión del juego
 if game_version == 'EU':
     base_url = 'http://versionec-es.eu.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/'
 elif game_version == 'NA':
@@ -51,21 +47,29 @@ if download_new_only:
 
 download_progress = {}
 start_time = datetime.now()
-async def download_file(session, file_name, index, total):
-    destination_path = os.path.join(destination_folder, file_name)
 
+async def download_file(session, file_name, index, total, attempts=3):
+    destination_path = os.path.join(destination_folder, file_name)
     url = f"{base_url}{file_name}"
-    async with session.get(url) as response:
-        if response.status == 200:
-            total_size_in_bytes = int(response.headers.get('content-length', 0))
-            downloaded_size = 0
-            with open(destination_path, 'wb') as f:
-                async for chunk in response.content.iter_chunked(8192):
-                    f.write(chunk)
-                    downloaded_size += len(chunk)
-                    download_progress[file_name] = (downloaded_size, total_size_in_bytes)
-            with open(downloaded_files_log, 'a') as log_file:
-                log_file.write(f"{file_name}\n")
+
+    for attempt in range(attempts):
+        try:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=300)) as response:
+                if response.status == 200:
+                    total_size_in_bytes = int(response.headers.get('content-length', 0))
+                    downloaded_size = 0
+                    with open(destination_path, 'wb') as f:
+                        async for chunk in response.content.iter_chunked(8192):
+                            f.write(chunk)
+                            downloaded_size += len(chunk)
+                            download_progress[file_name] = (downloaded_size, total_size_in_bytes)
+                    with open(downloaded_files_log, 'a') as log_file:
+                        log_file.write(f"{file_name}\n")
+                    return
+        except asyncio.TimeoutError:
+            print(f"Timeout error on {file_name}, attempt {attempt + 1} of {attempts}. Retrying...")
+            await asyncio.sleep(2)
+    print(f"Failed to download {file_name} after {attempts} attempts.")
 
 async def print_progress(total_files):
     while len(download_progress) < total_files or not all(progress == total for progress, total in download_progress.values()):
@@ -87,12 +91,14 @@ async def main():
     async with aiohttp.ClientSession(connector=connector) as session:
         download_tasks = [download_file(session, file_name, index, len(file_names)) for index, file_name in enumerate(file_names)]
         progress_task = print_progress(len(file_names))
-        await asyncio.gather(*download_tasks, progress_task)
-    
+        try:
+            await asyncio.gather(*download_tasks, progress_task)
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
     total_time = datetime.now() - start_time
     formatted_total_time = str(total_time).split('.')[0]
     print(f"{Fore.CYAN}{len(file_names)} files downloaded in {formatted_total_time}.")
 
 if __name__ == "__main__":
     asyncio.run(main())
-
