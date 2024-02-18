@@ -6,7 +6,6 @@ Welcome to Olympus, the all-in one Wizard101 file downloader.
 - Olympus is licensed under the MIT License.
 
 # Installation
-## Olympus is based in Python3.11.
 Create a virtual environment and install the requirements:
 ## Linux
 ```bash
