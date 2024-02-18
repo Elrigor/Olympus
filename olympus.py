@@ -17,7 +17,7 @@ game_version = config.get('game_version', 'EU')
 download_new_only = config.get('download_new_only', True)
 
 if game_version == 'EU':
-    base_url = 'http://versionec-es.eu.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/'
+    base_url = 'http://versionec-es.eu.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/Karamelle-Interiors-KM_Z09_HotHouse.wad'
 elif game_version == 'NA':
     base_url = 'http://versionec-na.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/'
 
@@ -48,28 +48,22 @@ if download_new_only:
 download_progress = {}
 start_time = datetime.now()
 
-async def download_file(session, file_name, index, total, attempts=3):
+async def download_file(session, file_name, index, total):
     destination_path = os.path.join(destination_folder, file_name)
     url = f"{base_url}{file_name}"
 
-    for attempt in range(attempts):
-        try:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=300)) as response:
-                if response.status == 200:
-                    total_size_in_bytes = int(response.headers.get('content-length', 0))
-                    downloaded_size = 0
-                    with open(destination_path, 'wb') as f:
-                        async for chunk in response.content.iter_chunked(8192):
-                            f.write(chunk)
-                            downloaded_size += len(chunk)
-                            download_progress[file_name] = (downloaded_size, total_size_in_bytes)
-                    with open(downloaded_files_log, 'a') as log_file:
-                        log_file.write(f"{file_name}\n")
-                    return
-        except asyncio.TimeoutError:
-            print(f"Timeout error on {file_name}, attempt {attempt + 1} of {attempts}. Retrying...")
-            await asyncio.sleep(2)
-    print(f"Failed to download {file_name} after {attempts} attempts.")
+    async with session.get(url, timeout=aiohttp.ClientTimeout(total=600)) as response:
+        if response.status == 200:
+            total_size_in_bytes = int(response.headers.get('content-length', 0))
+            downloaded_size = 0
+            with open(destination_path, 'wb') as f:
+                async for chunk in response.content.iter_chunked(8192):
+                    f.write(chunk)
+                    downloaded_size += len(chunk)
+                    download_progress[file_name] = (downloaded_size, total_size_in_bytes)
+            with open(downloaded_files_log, 'a') as log_file:
+                log_file.write(f"{file_name}\n")
+            return
 
 async def print_progress(total_files):
     while len(download_progress) < total_files or not all(progress == total for progress, total in download_progress.values()):
