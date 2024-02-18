@@ -24,7 +24,7 @@ To use Olympus, simply run the following command:
 ## Configure Olympus
 * Modify the `config.json` file to your needs:
 
-  * `game_path`: The folder where the your Wizard101's `Data/GameData` folder is.
+  * `game_path`: The folder where the your Wizard101's `Data/GameData` folder is. If in windows, use two backslashes `\\` instead of one.
   * `game_version`: It can either be `NA` or `EU`.
   * `download_new_only`: If `true`, Olympus will only download the files that you haven't already downloaded.
 
