@@ -17,7 +17,7 @@ game_version = config.get('game_version', 'EU')
 download_new_only = config.get('download_new_only', True)
 
 if game_version == 'EU':
-    base_url = 'http://versionec-es.eu.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/Karamelle-Interiors-KM_Z09_HotHouse.wad'
+    base_url = 'http://versionec-es.eu.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/'
 elif game_version == 'NA':
     base_url = 'http://versionec-na.wizard101.com/WizPatcher/V_r747324.Wizard_1_490/LatestBuild/Data/GameData/'
 
