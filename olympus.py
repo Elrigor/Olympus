@@ -52,7 +52,7 @@ async def download_file(session, file_name, index, total):
     destination_path = os.path.join(destination_folder, file_name)
     url = f"{base_url}{file_name}"
 
-    async with session.get(url, timeout=aiohttp.ClientTimeout(total=600)) as response:
+    async with session.get(url, timeout=aiohttp.ClientTimeout(total=600000)) as response:
         if response.status == 200:
             total_size_in_bytes = int(response.headers.get('content-length', 0))
             downloaded_size = 0
@@ -87,8 +87,12 @@ async def main():
         progress_task = print_progress(len(file_names))
         try:
             await asyncio.gather(*download_tasks, progress_task)
+            total_time = datetime.now() - start_time
+            formatted_total_time = str(total_time).split('.')[0]
+            print(f"{Fore.CYAN}{len(file_names)} files downloaded in {formatted_total_time}.")
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            print(f"An unexpected error occurred: {e.__class__.__name__}: {str(e)}")
+
 
     total_time = datetime.now() - start_time
     formatted_total_time = str(total_time).split('.')[0]
